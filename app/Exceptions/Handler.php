@@ -80,13 +80,27 @@ class Handler extends ExceptionHandler
     }
 
     /**
-     * @return array<int, string>
+     * Stacktrace sebagai array of frame. Frame pertama = titik exception dilempar,
+     * sisanya = urutan pemanggilan ke atas.
+     *
+     * @return array<int, array{file: ?string, line: ?int, function: string}>
      */
     protected function stacktraceOf(Throwable $e): array
     {
-        return array_merge(
-            [get_class($e).': '.$e->getMessage().' at '.$e->getFile().':'.$e->getLine()],
-            explode("\n", $e->getTraceAsString())
-        );
+        $frames = [[
+            'file' => $e->getFile(),
+            'line' => $e->getLine(),
+            'function' => get_class($e),
+        ]];
+
+        foreach ($e->getTrace() as $frame) {
+            $frames[] = [
+                'file' => $frame['file'] ?? null,
+                'line' => $frame['line'] ?? null,
+                'function' => ($frame['class'] ?? '').($frame['type'] ?? '').$frame['function'],
+            ];
+        }
+
+        return $frames;
     }
 }
