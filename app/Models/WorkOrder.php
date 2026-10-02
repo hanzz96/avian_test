@@ -44,10 +44,6 @@ class WorkOrder extends BaseModel
         return $this->status === self::STATUS_RUNNING;
     }
 
-    /**
-     * Data siap tampil untuk list: join produk/mesin/operator + total good/reject dari hasil produksi.
-     * Satu baris per WO (digroup), jadi aman dipaginasi.
-     */
     public function scopeWithDetail(Builder $query): Builder
     {
         return $query
@@ -71,8 +67,6 @@ class WorkOrder extends BaseModel
     }
 
     /**
-     * Filter list. Wajib dipakai bersama scopeWithDetail() (butuh join-nya).
-     *
      * @param  array{search?:string,product?:string,machine?:string,status?:string,date?:string}  $filters
      */
     public function scopeFilter(Builder $query, array $filters): Builder

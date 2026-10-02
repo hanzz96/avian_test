@@ -7,7 +7,6 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 class ProductionOrderService
 {
-    /** Nama sort_by (API) => kolom sebenarnya. Whitelist agar input user tidak masuk ke ORDER BY. */
     private const SORTABLE = [
         'wo_number' => 'work_order.wo_number',
         'product' => 'product.product_name',

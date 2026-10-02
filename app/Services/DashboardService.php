@@ -9,17 +9,10 @@ use App\Models\WorkOrder;
 use Carbon\Carbon;
 use Carbon\CarbonImmutable;
 
-/**
- * Query dashboard. Semua tanggal "hari ini" dihitung relatif terhadap data terbaru
- * (MAX(actual_start)), bukan jam server.
- */
 class DashboardService
 {
     private const STATUSES = ['RUNNING', 'FINISHED', 'OPEN', 'CANCELLED'];
 
-    /**
-     * Achievement = good / target * 100. Target hanya dari WO yang sudah punya hasil produksi.
-     */
     public static function achievement(float|int|null $good, float|int|null $target): float
     {
         return $target > 0 ? round($good / $target * 100, 2) : 0.0;
@@ -60,11 +53,10 @@ class DashboardService
             'good_qty' => (int) $result->good,
             'reject_qty' => (int) $result->reject,
             'downtime_minutes' => (int) $downtime,
-            'achievement' => self::achievement($result->good, $result->target),
+            'achievement' => self::achievement($result->good, $result->target)
         ];
     }
 
-    /** Tanggal terbaru di data (bukan CURDATE()), fallback ke hari ini bila data kosong. */
     private function latestDate(): CarbonImmutable
     {
         $max = ProductionResult::max('actual_start');
@@ -110,7 +102,9 @@ class DashboardService
         return $rows;
     }
 
-    /** @return array<string, object{good:int,reject:int,target:int}> keyed by Y-m-d */
+    /**
+     * @return array<string, object{good:int,reject:int,target:int}>
+     */
     private function dailyTotals(Carbon|CarbonImmutable $from, Carbon|CarbonImmutable $to): array
     {
         return ProductionResult::withWorkOrder()
@@ -126,10 +120,12 @@ class DashboardService
     {
         $counts = $this->countByStatus();
 
-        return array_map(fn ($s) => ['status' => $s, 'total' => (int) ($counts[$s] ?? 0)], self::STATUSES);
+        return array_map(fn($s) => ['status' => $s, 'total' => (int) ($counts[$s] ?? 0)], self::STATUSES);
     }
 
-    /** @return \Illuminate\Support\Collection<string, int> jumlah WO per status */
+    /**
+     * @return \Illuminate\Support\Collection<string, int>
+     */
     private function countByStatus()
     {
         return WorkOrder::selectRaw('status, COUNT(*) total')->groupBy('status')->pluck('total', 'status');
@@ -145,7 +141,7 @@ class DashboardService
             ->limit($limit)
             ->selectRaw('machine.machine_code, machine.machine_name, SUM(production_result.good_qty) good_qty, SUM(work_order.target_qty) target')
             ->get()
-            ->map(fn ($r) => [
+            ->map(fn($r) => [
                 'machine_code' => $r->machine_code,
                 'machine_name' => $r->machine_name,
                 'good_qty' => (int) $r->good_qty,

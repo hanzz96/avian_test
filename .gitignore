@@ -18,9 +18,11 @@ yarn-error.log
 /.idea
 /.vscode
 
-# Dataset (jangan di-push)
 /db/
 
-# Claude / planning notes (lokal, jangan di-push)
 /CLAUDE.md
 /docs/plan/
+
+/_ide_helper.php
+/.phpstorm.meta.php
+/_ide_helper_models.php

@@ -32,13 +32,6 @@ class Handler extends ExceptionHandler
         });
     }
 
-    /**
-     * Semua error pada API dirender terpusat di sini:
-     * - CustomException        => 400 + message dari exception
-     * - Validation / HTTP (404, 405, dst) => status aslinya
-     * - Error lainnya          => 500 "Internal Server Error"
-     * Di luar production ditambahkan key "stacktrace".
-     */
     public function render($request, Throwable $e)
     {
         if ($this->shouldRenderJson($request)) {
@@ -74,7 +67,6 @@ class Handler extends ExceptionHandler
 
         if (! app()->isProduction()) {
             if ($e instanceof ValidationException) {
-                // Validasi gagal sebelum controller jalan, jadi trace tidak menunjuk ke kode kita.
                 $body['source'] = $this->validationSourceOf($e);
             }
             $body['stacktrace'] = $this->stacktraceOf($e);
@@ -84,9 +76,6 @@ class Handler extends ExceptionHandler
     }
 
     /**
-     * Stacktrace hanya berisi kode aplikasi (tanpa frame di vendor/), path relatif terhadap root project.
-     * Frame pertama = titik exception dilempar bila berasal dari kode kita; sisanya urutan pemanggilan.
-     *
      * @return array<int, array{file: ?string, line: ?int, function: string}>
      */
     protected function stacktraceOf(Throwable $e): array
@@ -114,9 +103,6 @@ class Handler extends ExceptionHandler
     }
 
     /**
-     * Untuk error validasi: tunjukkan endpoint (controller action) dan FormRequest yang menolak input,
-     * lengkap dengan lokasi `rules()`-nya.
-     *
      * @return array{action: ?string, form_request: ?string, file: ?string, line: ?int}
      */
     protected function validationSourceOf(ValidationException $e): array

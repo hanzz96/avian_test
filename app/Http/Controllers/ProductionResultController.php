@@ -6,9 +6,6 @@ use App\Http\Requests\StoreProductionResultRequest;
 use App\Services\ProductionResultService;
 use Illuminate\Http\JsonResponse;
 
-/**
- * POST /api/production-results — simpan hasil produksi (hanya untuk WO RUNNING).
- */
 class ProductionResultController extends Controller
 {
     public function __construct(private ProductionResultService $service)

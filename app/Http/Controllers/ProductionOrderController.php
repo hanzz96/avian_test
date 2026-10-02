@@ -6,9 +6,6 @@ use App\Http\Requests\ListProductionOrderRequest;
 use App\Services\ProductionOrderService;
 use Illuminate\Http\JsonResponse;
 
-/**
- * GET /api/production-orders — list WO (search, filter, sorting, pagination).
- */
 class ProductionOrderController extends Controller
 {
     public function __construct(private ProductionOrderService $service)
