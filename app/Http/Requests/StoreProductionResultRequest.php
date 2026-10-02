@@ -18,7 +18,7 @@ class StoreProductionResultRequest extends FormRequest
             'qty_good' => 'required|integer|min:0',
             'qty_reject' => 'required|integer|min:0',
             'production_date' => 'required|date_format:Y-m-d|before_or_equal:today',
-            // opsional; bila kosong diturunkan dari jadwal WO
+
             'actual_start' => 'nullable|date_format:Y-m-d H:i:s',
             'actual_finish' => 'nullable|date_format:Y-m-d H:i:s|after:actual_start',
         ];

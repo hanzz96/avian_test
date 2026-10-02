@@ -1,5 +1,3 @@
-# Stack: Nginx → PHP-FPM (Laravel) → MySQL.
-# Jalankan: docker compose up -d   (API di http://localhost:8000/api)
 services:
   db:
     image: mysql:8.0
@@ -15,10 +13,8 @@ services:
     command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
     volumes:
       - mysql_data:/var/lib/mysql
-      # dataset.sql di-import otomatis saat volume masih kosong (start pertama)
       - ./db/init:/docker-entrypoint-initdb.d:ro
     healthcheck:
-      # -h 127.0.0.1 (TCP) supaya tidak "sehat" palsu saat server sementara proses import
       test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-p${DB_ROOT_PASSWORD:-root}"]
       interval: 5s
       timeout: 5s

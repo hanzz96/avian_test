@@ -10,9 +10,6 @@ use Carbon\Carbon;
 class ProductionResultService
 {
     /**
-     * Simpan hasil produksi untuk WO yang sedang RUNNING.
-     * Waktu aktual default: jam jadwal WO pada production_date.
-     *
      * @param  array{wo_number:string,qty_good:int,qty_reject:int,production_date:string,actual_start?:string,actual_finish?:string}  $data
      *
      * @throws ProductionOrderNotRunningException
