@@ -2,9 +2,12 @@
 
 namespace App\Services;
 
+use App\Models\Downtime;
+use App\Models\Machine;
+use App\Models\ProductionResult;
+use App\Models\WorkOrder;
 use Carbon\Carbon;
 use Carbon\CarbonImmutable;
-use Illuminate\Support\Facades\DB;
 
 /**
  * Query dashboard. Semua tanggal "hari ini" dihitung relatif terhadap data terbaru
@@ -36,21 +39,20 @@ class DashboardService
 
     public function machine(string $machineCode): array
     {
-        $machine = DB::table('machine')->where('machine_code', $machineCode)->first();
+        $machine = Machine::find($machineCode);
         abort_if(! $machine, 404, 'Machine not found');
 
-        $totalOrder = DB::table('work_order')->where('machine_code', $machineCode)->count();
+        $totalOrder = $machine->workOrders()->count();
 
-        $result = DB::table('production_result as p')
-            ->join('work_order as w', 'w.wo_number', '=', 'p.wo_number')
-            ->where('w.machine_code', $machineCode)
-            ->selectRaw('COALESCE(SUM(p.good_qty),0) good, COALESCE(SUM(p.reject_qty),0) reject, COALESCE(SUM(w.target_qty),0) target')
+        $result = ProductionResult::withWorkOrder()
+            ->where('work_order.machine_code', $machineCode)
+            ->selectRaw('COALESCE(SUM(production_result.good_qty),0) good, COALESCE(SUM(production_result.reject_qty),0) reject, COALESCE(SUM(work_order.target_qty),0) target')
             ->first();
 
-        $downtime = DB::table('downtime as d')
-            ->join('work_order as w', 'w.wo_number', '=', 'd.wo_number')
-            ->where('w.machine_code', $machineCode)
-            ->sum('d.duration_minutes');
+        $downtime = Downtime::query()
+            ->join('work_order', 'work_order.wo_number', '=', 'downtime.wo_number')
+            ->where('work_order.machine_code', $machineCode)
+            ->sum('downtime.duration_minutes');
 
         return [
             'machine_name' => $machine->machine_name,
@@ -65,7 +67,7 @@ class DashboardService
     /** Tanggal terbaru di data (bukan CURDATE()), fallback ke hari ini bila data kosong. */
     private function latestDate(): CarbonImmutable
     {
-        $max = DB::table('production_result')->max('actual_start');
+        $max = ProductionResult::max('actual_start');
 
         return CarbonImmutable::parse($max ?? now())->startOfDay();
     }
@@ -76,10 +78,10 @@ class DashboardService
         $good = (int) ($today->good ?? 0);
         $target = (int) ($today->target ?? 0);
 
-        $status = DB::table('work_order')->selectRaw('status, COUNT(*) total')->groupBy('status')->pluck('total', 'status');
+        $status = $this->countByStatus();
 
         return [
-            'total_machine' => DB::table('machine')->count(),
+            'total_machine' => Machine::count(),
             'running_order' => (int) ($status['RUNNING'] ?? 0),
             'finished_order' => (int) ($status['FINISHED'] ?? 0),
             'today_target' => $target,
@@ -111,11 +113,10 @@ class DashboardService
     /** @return array<string, object{good:int,reject:int,target:int}> keyed by Y-m-d */
     private function dailyTotals(Carbon|CarbonImmutable $from, Carbon|CarbonImmutable $to): array
     {
-        return DB::table('production_result as p')
-            ->join('work_order as w', 'w.wo_number', '=', 'p.wo_number')
-            ->whereBetween('p.actual_start', [$from->startOfDay(), $to->endOfDay()])
-            ->selectRaw('DATE(p.actual_start) d, SUM(p.good_qty) good, SUM(p.reject_qty) reject, SUM(w.target_qty) target')
-            ->groupByRaw('DATE(p.actual_start)')
+        return ProductionResult::withWorkOrder()
+            ->whereBetween('production_result.actual_start', [$from->startOfDay(), $to->endOfDay()])
+            ->selectRaw('DATE(production_result.actual_start) d, SUM(production_result.good_qty) good, SUM(production_result.reject_qty) reject, SUM(work_order.target_qty) target')
+            ->groupByRaw('DATE(production_result.actual_start)')
             ->get()
             ->keyBy('d')
             ->all();
@@ -123,21 +124,26 @@ class DashboardService
 
     private function statusBreakdown(): array
     {
-        $counts = DB::table('work_order')->selectRaw('status, COUNT(*) total')->groupBy('status')->pluck('total', 'status');
+        $counts = $this->countByStatus();
 
         return array_map(fn ($s) => ['status' => $s, 'total' => (int) ($counts[$s] ?? 0)], self::STATUSES);
     }
 
+    /** @return \Illuminate\Support\Collection<string, int> jumlah WO per status */
+    private function countByStatus()
+    {
+        return WorkOrder::selectRaw('status, COUNT(*) total')->groupBy('status')->pluck('total', 'status');
+    }
+
     private function topMachines(int $limit): array
     {
-        return DB::table('production_result as p')
-            ->join('work_order as w', 'w.wo_number', '=', 'p.wo_number')
-            ->join('machine as m', 'm.machine_code', '=', 'w.machine_code')
-            ->groupBy('m.machine_code', 'm.machine_name')
+        return ProductionResult::withWorkOrder()
+            ->join('machine', 'machine.machine_code', '=', 'work_order.machine_code')
+            ->groupBy('machine.machine_code', 'machine.machine_name')
             ->orderByDesc('good_qty')
-            ->orderBy('m.machine_code')
+            ->orderBy('machine.machine_code')
             ->limit($limit)
-            ->selectRaw('m.machine_code, m.machine_name, SUM(p.good_qty) good_qty, SUM(w.target_qty) target')
+            ->selectRaw('machine.machine_code, machine.machine_name, SUM(production_result.good_qty) good_qty, SUM(work_order.target_qty) target')
             ->get()
             ->map(fn ($r) => [
                 'machine_code' => $r->machine_code,

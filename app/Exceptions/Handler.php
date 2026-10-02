@@ -73,6 +73,10 @@ class Handler extends ExceptionHandler
         }
 
         if (! app()->isProduction()) {
+            if ($e instanceof ValidationException) {
+                // Validasi gagal sebelum controller jalan, jadi trace tidak menunjuk ke kode kita.
+                $body['source'] = $this->validationSourceOf($e);
+            }
             $body['stacktrace'] = $this->stacktraceOf($e);
         }
 
@@ -80,8 +84,8 @@ class Handler extends ExceptionHandler
     }
 
     /**
-     * Stacktrace sebagai array of frame. Frame pertama = titik exception dilempar,
-     * sisanya = urutan pemanggilan ke atas.
+     * Stacktrace hanya berisi kode aplikasi (tanpa frame di vendor/), path relatif terhadap root project.
+     * Frame pertama = titik exception dilempar bila berasal dari kode kita; sisanya urutan pemanggilan.
      *
      * @return array<int, array{file: ?string, line: ?int, function: string}>
      */
@@ -101,6 +105,43 @@ class Handler extends ExceptionHandler
             ];
         }
 
-        return $frames;
+        $vendor = base_path('vendor').DIRECTORY_SEPARATOR;
+
+        return array_values(array_map(
+            fn ($f) => ['file' => $this->relativePath($f['file'])] + $f,
+            array_filter($frames, fn ($f) => $f['file'] !== null && ! str_starts_with($f['file'], $vendor))
+        ));
+    }
+
+    /**
+     * Untuk error validasi: tunjukkan endpoint (controller action) dan FormRequest yang menolak input,
+     * lengkap dengan lokasi `rules()`-nya.
+     *
+     * @return array{action: ?string, form_request: ?string, file: ?string, line: ?int}
+     */
+    protected function validationSourceOf(ValidationException $e): array
+    {
+        $route = request()->route();
+        $source = ['action' => $route?->getActionName(), 'form_request' => null, 'file' => null, 'line' => null];
+
+        if ($route && is_object($controller = $route->getController())) {
+            $method = new \ReflectionMethod($controller, $route->getActionMethod());
+            foreach ($method->getParameters() as $param) {
+                $type = $param->getType();
+                if ($type instanceof \ReflectionNamedType && is_subclass_of($type->getName(), \Illuminate\Foundation\Http\FormRequest::class)) {
+                    $rules = new \ReflectionMethod($type->getName(), 'rules');
+                    $source['form_request'] = $type->getName();
+                    $source['file'] = $this->relativePath($rules->getFileName());
+                    $source['line'] = $rules->getStartLine();
+                }
+            }
+        }
+
+        return $source;
+    }
+
+    protected function relativePath(?string $path): ?string
+    {
+        return $path === null ? null : ltrim(str_replace(base_path(), '', $path), DIRECTORY_SEPARATOR);
     }
 }
