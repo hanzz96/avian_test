@@ -1,0 +1,189 @@
+{
+  "_type": "export",
+  "__export_format": 4,
+  "__export_date": "2026-10-02T00:00:00.000Z",
+  "__export_source": "claude-code",
+  "resources": [
+    {
+      "_id": "wrk_avian",
+      "_type": "workspace",
+      "parentId": null,
+      "name": "Avian Production Monitoring",
+      "scope": "collection"
+    },
+    {
+      "_id": "env_avian",
+      "_type": "environment",
+      "parentId": "wrk_avian",
+      "name": "Base Environment",
+      "data": {
+        "base_url": "http://127.0.0.1:8000/api",
+        "wo_number": "WO2026000009",
+        "machine_code": "GRD02"
+      }
+    },
+    {
+      "_id": "req_avian_1",
+      "_type": "request",
+      "parentId": "wrk_avian",
+      "name": "Dashboard",
+      "method": "GET",
+      "url": "{{ _.base_url }}/dashboard",
+      "headers": [
+        {
+          "name": "Accept",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [],
+      "body": {}
+    },
+    {
+      "_id": "req_avian_2",
+      "_type": "request",
+      "parentId": "wrk_avian",
+      "name": "Dashboard - Machine Detail",
+      "method": "GET",
+      "url": "{{ _.base_url }}/dashboard/machine/{{ _.machine_code }}",
+      "headers": [
+        {
+          "name": "Accept",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [],
+      "body": {}
+    },
+    {
+      "_id": "req_avian_3",
+      "_type": "request",
+      "parentId": "wrk_avian",
+      "name": "Production Orders - List",
+      "method": "GET",
+      "url": "{{ _.base_url }}/production-orders",
+      "headers": [
+        {
+          "name": "Accept",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [
+        {
+          "name": "search",
+          "value": "disperser",
+          "disabled": true
+        },
+        {
+          "name": "product",
+          "value": "BYO0001",
+          "disabled": true
+        },
+        {
+          "name": "machine",
+          "value": "GRD02",
+          "disabled": true
+        },
+        {
+          "name": "status",
+          "value": "RUNNING,OPEN",
+          "disabled": true
+        },
+        {
+          "name": "date",
+          "value": "2026-09-03",
+          "disabled": true
+        },
+        {
+          "name": "page",
+          "value": "1",
+          "disabled": false
+        },
+        {
+          "name": "per_page",
+          "value": "15",
+          "disabled": false
+        },
+        {
+          "name": "sort_by",
+          "value": "plan_start",
+          "disabled": false
+        },
+        {
+          "name": "sort_dir",
+          "value": "desc",
+          "disabled": false
+        }
+      ],
+      "body": {}
+    },
+    {
+      "_id": "req_avian_4",
+      "_type": "request",
+      "parentId": "wrk_avian",
+      "name": "Production Results - Create",
+      "method": "POST",
+      "url": "{{ _.base_url }}/production-results",
+      "headers": [
+        {
+          "name": "Accept",
+          "value": "application/json"
+        },
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"wo_number\": \"{{ _.wo_number }}\",\n  \"qty_good\": 100,\n  \"qty_reject\": 2,\n  \"production_date\": \"2026-01-05\"\n}"
+      }
+    },
+    {
+      "_id": "req_avian_5",
+      "_type": "request",
+      "parentId": "wrk_avian",
+      "name": "Production Results - Create (not RUNNING => 400)",
+      "method": "POST",
+      "url": "{{ _.base_url }}/production-results",
+      "headers": [
+        {
+          "name": "Accept",
+          "value": "application/json"
+        },
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"wo_number\": \"WO2026000001\",\n  \"qty_good\": 100,\n  \"qty_reject\": 2,\n  \"production_date\": \"2026-01-05\"\n}"
+      }
+    },
+    {
+      "_id": "req_avian_6",
+      "_type": "request",
+      "parentId": "wrk_avian",
+      "name": "Production Results - Create (invalid => 422)",
+      "method": "POST",
+      "url": "{{ _.base_url }}/production-results",
+      "headers": [
+        {
+          "name": "Accept",
+          "value": "application/json"
+        },
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"wo_number\": \"{{ _.wo_number }}\",\n  \"qty_good\": -1,\n  \"qty_reject\": -1,\n  \"production_date\": \"2099-01-01\"\n}"
+      }
+    }
+  ]
+}
