@@ -6,6 +6,10 @@ use Carbon\Carbon;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * Query dashboard. Semua tanggal "hari ini" dihitung relatif terhadap data terbaru
+ * (MAX(actual_start)), bukan jam server.
+ */
 class DashboardService
 {
     private const STATUSES = ['RUNNING', 'FINISHED', 'OPEN', 'CANCELLED'];

@@ -9,6 +9,10 @@ use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * POST /api/production-results — simpan hasil produksi.
+ * Hanya WO berstatus RUNNING yang boleh menerima hasil.
+ */
 class ProductionResultController extends Controller
 {
     public function store(StoreProductionResultRequest $request): JsonResponse
