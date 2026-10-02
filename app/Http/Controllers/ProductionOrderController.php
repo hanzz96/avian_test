@@ -6,6 +6,10 @@ use App\Http\Requests\ListProductionOrderRequest;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * GET /api/production-orders — list WO dengan search, filter, sorting, dan pagination.
+ * Kolom sort dibatasi whitelist (SORTABLE) agar input user tidak masuk ke ORDER BY.
+ */
 class ProductionOrderController extends Controller
 {
     private const SORTABLE = [
