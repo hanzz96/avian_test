@@ -20,3 +20,7 @@ yarn-error.log
 
 # Dataset (jangan di-push)
 /db/
+
+# Claude / planning notes (lokal, jangan di-push)
+/CLAUDE.md
+/docs/plan/
