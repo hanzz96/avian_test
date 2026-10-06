@@ -184,6 +184,33 @@
         "mimeType": "application/json",
         "text": "{\n  \"wo_number\": \"{{ _.wo_number }}\",\n  \"qty_good\": -1,\n  \"qty_reject\": -1,\n  \"production_date\": \"2099-01-01\"\n}"
       }
+    },
+    {
+      "_id": "req_avian_7",
+      "_type": "request",
+      "parentId": "wrk_avian",
+      "name": "Machine - Work Orders (hasMany)",
+      "method": "GET",
+      "url": "{{ _.base_url }}/machines/{{ _.machine_code }}/work-orders",
+      "headers": [
+        {
+          "name": "Accept",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [
+        {
+          "name": "status",
+          "value": "RUNNING",
+          "disabled": false
+        },
+        {
+          "name": "limit",
+          "value": "10",
+          "disabled": false
+        }
+      ],
+      "body": {}
     }
   ]
 }

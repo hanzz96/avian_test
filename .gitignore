@@ -23,6 +23,4 @@ yarn-error.log
 /CLAUDE.md
 /docs/plan/
 
-/_ide_helper.php
-/.phpstorm.meta.php
-/_ide_helper_models.php
+/docker-compose.override.yml
